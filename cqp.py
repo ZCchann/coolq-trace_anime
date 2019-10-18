@@ -87,7 +87,7 @@ def tarce_amine():
     if eval_cqp_data['message_type'] == 'group':
         if eval_cqp_data['message'] == '识别番剧截图':  # 私聊搜索番剧截图  replace 删除换行符跟回车
             if eval_cqp_data['user_id'] not in user_group_list:
-                group_number_list.append(eval_cqp_data['user_id'])
+                user_group_list.append(eval_cqp_data['user_id'])
                 search_results = {
                     "group_id": eval_cqp_data['group_id'],
                     "message": '请发送图片'
