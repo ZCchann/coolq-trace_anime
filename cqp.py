@@ -123,7 +123,7 @@ def tarce_amine():
                                        0] + '秒'
                     }
                     requests.get(url=qunliao, params=search_results)
-                    group_number_list.pop(group_number)
+                    user_group_list.pop(group_number)
                     break
                 group_number = group_number + 1
 #######################################################################################################################
