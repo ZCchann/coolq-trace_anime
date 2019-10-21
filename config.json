@@ -1,0 +1,8 @@
+{
+  "coolq_http_api_ip":"127.0.0.1",
+  "coolq_http_api_port":"5700",
+  "tarce_message": "识别番剧截图",
+  "search_message": "搜索图片",
+  "api_key": "91835487587906f735bad34ebe8e9519ec7ef72e"
+
+}
