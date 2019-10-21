@@ -153,8 +153,7 @@ def tarce_amine():
                     episode = result["docs"][0]["episode"]  # 切片集数
                     search_results = {
                         "group_id": eval_cqp_data['group_id'],
-                        # "message":
-                        "message": "[CQ:at,qq=" + str(eval_cqp_data['user_id'])+"]" +
+                        "message": "[CQ:at,qq=" + str(eval_cqp_data['user_id'])+"]" + '\n' +
                                    "番剧名称：" + animename + " 第" + str(episode) + "集" + '\n' +
                                    "相似度：" + str(similarity * 100).split('.')[0] + "." +
                                    str(similarity * 100).split('.')[1][
@@ -186,7 +185,7 @@ def tarce_amine():
             episode = result["docs"][0]["episode"]  # 切片集数
             search_results = {
                 "group_id": eval_cqp_data['group_id'],
-                "message": "[CQ:at,qq=" + str(eval_cqp_data['user_id'])+"]" +
+                "message": "[CQ:at,qq=" + str(eval_cqp_data['user_id'])+"]" +'\n' +
                            "番剧名称：" + animename + " 第" + str(episode) + "集" + '\n' +
                            "相似度：" + str(similarity * 100).split('.')[0] + "." +
                            str(similarity * 100).split('.')[1][:2] + "%"
