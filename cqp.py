@@ -218,31 +218,42 @@ def tarce_amine():
                     response.encoding = 'utf-8'  # 把trace.moe的返回信息转码成utf-8
                     result = response.json()  # 转换成json格式
                     mini_image = result['results'][0]['header']['thumbnail']
-                    ext_urls = str(result['results'][0]['data']['ext_urls'])
                     similarity = result['results'][0]['header']['similarity']
-
-                    if 'pixiv_id' in result['results'][0]['data'] :   #如果P站ID存在返回值里面的话
-                        member_name = result['results'][0]['data']['member_name']
-                        title = result['results'][0]['data']['title']
-                        pixiv_id = int(result['results'][0]['data']['pixiv_id'])
-                        search_results = {
-                            "user_id": eval_cqp_data['user_id'],
-                            "message": "[CQ:image,file=" + str(mini_image) + "]" + '\n'+    #返回图片的CQ码给酷Q air版无法发送图片
-                                       "相似度 " + str(similarity) +'%' + '\n' +
-                                       "作者名称 " + str(member_name) + '\n'+
-                                       "图片名称 "+ str(title) + '\n' +
-                                       "P站id " + str(pixiv_id)+'\n' +
-                                       "图片链接 " + '\n' + ext_urls.replace('[','').replace(']','').replace("'",'')
+                    if 'ext_urls' in result['results'][0]['data'] :
+                        ext_urls = str(result['results'][0]['data']['ext_urls'])
+                        if 'pixiv_id' in result['results'][0]['data'] :   #如果P站ID存在返回值里面的话
+                            member_name = result['results'][0]['data']['member_name']
+                            title = result['results'][0]['data']['title']
+                            pixiv_id = int(result['results'][0]['data']['pixiv_id'])
+                            search_results = {
+                                "user_id": eval_cqp_data['user_id'],
+                                "message": "[CQ:image,file=" + str(mini_image) + "]" + '\n'+    #返回图片的CQ码给酷Q air版无法发送图片
+                                           "相似度 " + str(similarity) +'%' + '\n' +
+                                           "作者名称 " + str(member_name) + '\n'+
+                                           "图片名称 "+ str(title) + '\n' +
+                                           "P站id " + str(pixiv_id)+'\n' +
+                                           "图片链接 " + '\n' + ext_urls.replace('[','').replace(']','').replace("'",'')
+                                }
+                            requests.get(url=siliao, params=search_results)
+                            search_acg_image_list.pop(search_acg_number)
+                            break
+                        elif 'pixiv_id' not in result['results'][0]['data'] : #如果P站ID不存在返回值里面的话
+                            search_results = {
+                                "user_id": eval_cqp_data['user_id'],
+                                "message": "[CQ:image,file=" + str(mini_image) + "]" + '\n' +  # 返回图片的CQ码给酷Q air版无法发送图片
+                                           "相似度 " + str(similarity) + '%' + '\n' +
+                                           "图片链接 " + '\n' + ext_urls.replace('[', '').replace(']', '').replace("'", '')
                             }
-                        requests.get(url=siliao, params=search_results)
-                        search_acg_image_list.pop(search_acg_number)
-                        break
-                    elif 'pixiv_id' not in result['results'][0]['data'] : #如果P站ID不存在返回值里面的话
+                            requests.get(url=siliao, params=search_results)
+                            search_acg_image_list.pop(search_acg_number)
+                            break
+                    elif 'ext_urls' not in  result['results'][0]['data'] :
+                        jp_name = result['results'][0]['data']['jp_name']
                         search_results = {
                             "user_id": eval_cqp_data['user_id'],
                             "message": "[CQ:image,file=" + str(mini_image) + "]" + '\n' +  # 返回图片的CQ码给酷Q air版无法发送图片
                                        "相似度 " + str(similarity) + '%' + '\n' +
-                                       "图片链接 " + '\n' + ext_urls.replace('[', '').replace(']', '').replace("'", '')
+                                       "名称 " + jp_name
                         }
                         requests.get(url=siliao, params=search_results)
                         search_acg_image_list.pop(search_acg_number)
@@ -260,34 +271,42 @@ def tarce_amine():
             response = requests.get(search_image)  # 获取trace.moe的返回信息
             response.encoding = 'utf-8'  # 把trace.moe的返回信息转码成utf-8
             result = response.json()  # 转换成json格式
-            ext_urls = str(result['results'][0]['data']['ext_urls'])
             similarity = result['results'][0]['header']['similarity']
             mini_image = result['results'][0]['header']['thumbnail']
-
-            if 'title' in  result['results'][0]['data'] :
-                title = result['results'][0]['data']['title']
-                pixiv_id = int(result['results'][0]['data']['pixiv_id'])
-                member_name = result['results'][0]['data']['member_name']
+            if 'ext_urls' in result['results'][0]['data']:
+                ext_urls = str(result['results'][0]['data']['ext_urls'])
+                if 'title' in  result['results'][0]['data'] :
+                    title = result['results'][0]['data']['title']
+                    pixiv_id = int(result['results'][0]['data']['pixiv_id'])
+                    member_name = result['results'][0]['data']['member_name']
+                    search_results = {
+                        "user_id": eval_cqp_data['user_id'],
+                        "message": "[CQ:image,file=" + str(mini_image) + "]" + '\n' +  # 返回图片的CQ码给酷Q air版无法发送图片
+                                   "相似度 " + str(similarity) + '%' + '\n' +
+                                   "作者名称 " + str(member_name) + '\n' +
+                                   "图片名称 " + str(title) + '\n' +
+                                   "P站id " + str(pixiv_id) + '\n' +
+                                   "图片链接 " + '\n' + ext_urls.replace('[', '').replace(']', '').replace("'", '')
+                    }
+                    requests.get(url=siliao, params=search_results)
+                elif 'title' not in result['results'][0]['data'] :
+                    search_results = {
+                        "user_id": eval_cqp_data['user_id'],
+                        "message": "[CQ:image,file=" + str(mini_image) + "]" + '\n' +  # 返回图片的CQ码给酷Q air版无法发送图片
+                                   "相似度 " + str(similarity) + '%' + '\n' +
+                                   "图片链接 " + '\n' + ext_urls.replace('[', '').replace(']', '').replace("'", '')
+                    }
+                    requests.get(url=siliao, params=search_results)
+            elif 'ext_urls' not in result['results'][0]['data']:
+                jp_name = result['results'][0]['data']['jp_name']
                 search_results = {
                     "user_id": eval_cqp_data['user_id'],
                     "message": "[CQ:image,file=" + str(mini_image) + "]" + '\n' +  # 返回图片的CQ码给酷Q air版无法发送图片
                                "相似度 " + str(similarity) + '%' + '\n' +
-                               "作者名称 " + str(member_name) + '\n' +
-                               "图片名称 " + str(title) + '\n' +
-                               "P站id " + str(pixiv_id) + '\n' +
-                               "图片链接 " + '\n' + ext_urls.replace('[', '').replace(']', '').replace("'", '')
+                               "名称 " + jp_name
                 }
                 requests.get(url=siliao, params=search_results)
-            elif 'title' not in result['results'][0]['data'] :
-                search_results = {
-                    "user_id": eval_cqp_data['user_id'],
-                    "message": "[CQ:image,file=" + str(mini_image) + "]" + '\n' +  # 返回图片的CQ码给酷Q air版无法发送图片
-                               "相似度 " + str(similarity) + '%' + '\n' +
-                               "图片链接 " + '\n' + ext_urls.replace('[', '').replace(']', '').replace("'", '')
-                }
-                requests.get(url=siliao, params=search_results)
-
-#####################################群聊 只发文字 后发图 识别番剧#############################
+#####################################群聊 只发文字 后发图 搜索图片#############################
     if eval_cqp_data['message_type'] == 'group':
         if eval_cqp_data['message'] == search_message:  # 私聊搜索番剧截图  replace 删除换行符跟回车
             if eval_cqp_data['user_id'] not in search_acg_image_group_list :
@@ -313,36 +332,47 @@ def tarce_amine():
                     response.encoding = 'utf-8'  # 把trace.moe的返回信息转码成utf-8
                     result = response.json()  # 转换成json格式
                     mini_image = result['results'][0]['header']['thumbnail']
-                    ext_urls = str(result['results'][0]['data']['ext_urls'])
                     similarity = result['results'][0]['header']['similarity']
+                    if 'ext_urls' in result['results'][0]['data'] :
+                        ext_urls = str(result['results'][0]['data']['ext_urls'])
+                        if 'member_name' in result['results'][0]['data'] :
 
-                    if 'member_name' in result['results'][0]['data'] :
+                            pixiv_id = int(result['results'][0]['data']['pixiv_id'])
+                            member_name = result['results'][0]['data']['member_name']
+                            title = result['results'][0]['data']['title']
 
-                        pixiv_id = int(result['results'][0]['data']['pixiv_id'])
-                        member_name = result['results'][0]['data']['member_name']
-                        title = result['results'][0]['data']['title']
-
-                        search_results = {
-                            "group_id": eval_cqp_data['group_id'],
-                            "message":"[CQ:at,qq=" + str(eval_cqp_data['user_id'])+"]" +
-                                       "[CQ:image,file=" + str(mini_image) + "]" + '\n' +  # 返回图片的CQ码给酷Q air版无法发送图片
-                                       "相似度 " + str(similarity) + '%' + '\n' +
-                                       "作者名称 " + str(member_name) + '\n' +
-                                       "图片名称 " + str(title) + '\n' +
-                                       "P站id " + str(pixiv_id) +'\n' +
-                                       "图片链接 " + '\n' + str(ext_urls.replace('[', '').replace(']', '').replace("'", ''))
-                        }
-                        requests.get(url=qunliao, params=search_results)
-                        search_acg_image_group_list.pop(search_acg_group_number)
-                        break
-
-                    elif'member_name' not in result['results'][0]['data'] :
+                            search_results = {
+                                "group_id": eval_cqp_data['group_id'],
+                                "message":"[CQ:at,qq=" + str(eval_cqp_data['user_id'])+"]" +
+                                           "[CQ:image,file=" + str(mini_image) + "]" + '\n' +  # 返回图片的CQ码给酷Q air版无法发送图片
+                                           "相似度 " + str(similarity) + '%' + '\n' +
+                                           "作者名称 " + str(member_name) + '\n' +
+                                           "图片名称 " + str(title) + '\n' +
+                                           "P站id " + str(pixiv_id) +'\n' +
+                                           "图片链接 " + '\n' + str(ext_urls.replace('[', '').replace(']', '').replace("'", ''))
+                            }
+                            requests.get(url=qunliao, params=search_results)
+                            search_acg_image_group_list.pop(search_acg_group_number)
+                            break
+                        elif'member_name' not in result['results'][0]['data'] :
+                            search_results = {
+                                "group_id": eval_cqp_data['group_id'],
+                                "message": "[CQ:at,qq=" + str(eval_cqp_data['user_id']) + "]" +
+                                           "[CQ:image,file=" + str(mini_image) + "]" + '\n' +  # 返回图片的CQ码给酷Q air版无法发送图片
+                                           "相似度 " + str(similarity) + '%' + '\n' +
+                                           "图片链接 " + '\n' + str(ext_urls.replace('[', '').replace(']', '').replace("'", ''))
+                            }
+                            requests.get(url=qunliao, params=search_results)
+                            search_acg_image_group_list.pop(search_acg_group_number)
+                            break
+                    elif 'ext_urls' not in result['results'][0]['data'] :
+                        jp_name = result['results'][0]['data']['jp_name']
                         search_results = {
                             "group_id": eval_cqp_data['group_id'],
                             "message": "[CQ:at,qq=" + str(eval_cqp_data['user_id']) + "]" +
                                        "[CQ:image,file=" + str(mini_image) + "]" + '\n' +  # 返回图片的CQ码给酷Q air版无法发送图片
                                        "相似度 " + str(similarity) + '%' + '\n' +
-                                       "图片链接 " + '\n' + str(ext_urls.replace('[', '').replace(']', '').replace("'", ''))
+                                       "名称 " + jp_name
                         }
                         requests.get(url=qunliao, params=search_results)
                         search_acg_image_group_list.pop(search_acg_group_number)
@@ -360,32 +390,42 @@ def tarce_amine():
             response = requests.get(search_image)  # 获取trace.moe的返回信息
             response.encoding = 'utf-8'  # 把trace.moe的返回信息转码成utf-8
             result = response.json()  # 转换成json格式
-            ext_urls = str(result['results'][0]['data']['ext_urls'])
             similarity = result['results'][0]['header']['similarity']
             mini_image = result['results'][0]['header']['thumbnail']
-
-            if 'title' in  result['results'][0]['data'] :
-                title = result['results'][0]['data']['title']
-                pixiv_id = int(result['results'][0]['data']['pixiv_id'])
-                member_name = result['results'][0]['data']['member_name']
+            if 'ext_urls' in result['results'][0]['data']:
+                ext_urls = str(result['results'][0]['data']['ext_urls'])
+                if 'title' in  result['results'][0]['data'] :
+                    title = result['results'][0]['data']['title']
+                    pixiv_id = int(result['results'][0]['data']['pixiv_id'])
+                    member_name = result['results'][0]['data']['member_name']
+                    search_results = {
+                        "group_id": eval_cqp_data['group_id'],
+                        "message": "[CQ:at,qq=" + str(eval_cqp_data['user_id'])+"]" +
+                                   "[CQ:image,file=" + str(mini_image) + "]" + '\n' +  # 返回图片的CQ码给酷Q air版无法发送图片
+                                   "相似度 " + str(similarity) + '%' + '\n' +
+                                   "作者名称 " + str(member_name) + '\n' +
+                                   "图片名称 " + str(title) + '\n' +
+                                   "P站id " + str(pixiv_id) + '\n' +
+                                   "图片链接 " + '\n' + ext_urls.replace('[', '').replace(']', '').replace("'", '')
+                    }
+                    requests.get(url=qunliao, params=search_results)
+                elif 'title' not in result['results'][0]['data'] :
+                    search_results = {
+                        "group_id": eval_cqp_data['group_id'],
+                        "message": "[CQ:at,qq=" + str(eval_cqp_data['user_id'])+"]" +
+                                   "[CQ:image,file=" + str(mini_image) + "]" + '\n' +  # 返回图片的CQ码给酷Q air版无法发送图片
+                                   "相似度 " + str(similarity) + '%' + '\n' +
+                                   "图片链接 " + '\n' + ext_urls.replace('[', '').replace(']', '').replace("'", '')
+                    }
+                    requests.get(url=qunliao, params=search_results)
+            elif 'ext_urls' not in result['results'][0]['data'] :
+                jp_name = result['results'][0]['data']['jp_name']
                 search_results = {
                     "group_id": eval_cqp_data['group_id'],
                     "message": "[CQ:at,qq=" + str(eval_cqp_data['user_id'])+"]" +
                                "[CQ:image,file=" + str(mini_image) + "]" + '\n' +  # 返回图片的CQ码给酷Q air版无法发送图片
                                "相似度 " + str(similarity) + '%' + '\n' +
-                               "作者名称 " + str(member_name) + '\n' +
-                               "图片名称 " + str(title) + '\n' +
-                               "P站id " + str(pixiv_id) + '\n' +
-                               "图片链接 " + '\n' + ext_urls.replace('[', '').replace(']', '').replace("'", '')
-                }
-                requests.get(url=qunliao, params=search_results)
-            elif 'title' not in result['results'][0]['data'] :
-                search_results = {
-                    "group_id": eval_cqp_data['group_id'],
-                    "message": "[CQ:at,qq=" + str(eval_cqp_data['user_id'])+"]" +
-                               "[CQ:image,file=" + str(mini_image) + "]" + '\n' +  # 返回图片的CQ码给酷Q air版无法发送图片
-                               "相似度 " + str(similarity) + '%' + '\n' +
-                               "图片链接 " + '\n' + ext_urls.replace('[', '').replace(']', '').replace("'", '')
+                               "名称 " + jp_name
                 }
                 requests.get(url=qunliao, params=search_results)
 
