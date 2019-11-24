@@ -49,8 +49,7 @@ search_acg_image_group_list = []#暂存 搜索图片 群搜图的群号
 @app.route('/',methods=[ 'POST'])
 def tarce_amine():
     cqp_push_data = request.get_data()  #获取机器人推送的内容
-    zhuanhuan = cqp_push_data.decode('utf-8')  #转换utf-8编码
-    eval_cqp_data = json.loads(zhuanhuan) #转换推送内容为字典格式
+    eval_cqp_data = json.loads(cqp_push_data.decode('utf-8')) #转换推送内容为字典格式
     private_number = 0
     group_number = 0
     search_acg_number = 0
