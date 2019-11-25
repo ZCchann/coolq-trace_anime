@@ -234,7 +234,7 @@ def tarce_amine():
                         member_name = result['results'][0]['data']['member_name']
                     except KeyError:
                         member_name = ""
-                    trt:
+                    try:
                         title = result['results'][0]['data']['title']
                     except KeyError:
                         title = ""
@@ -281,7 +281,7 @@ def tarce_amine():
                 member_name = result['results'][0]['data']['member_name']
             except KeyError:
                 member_name = ""
-            trt:
+            try:
                 title = result['results'][0]['data']['title']
             except KeyError:
                 title = ""
@@ -338,7 +338,7 @@ def tarce_amine():
                         member_name = result['results'][0]['data']['member_name']
                     except KeyError:
                         member_name = ""
-                    trt:
+                    try:
                         title = result['results'][0]['data']['title']
                     except KeyError:
                         title = ""
@@ -386,7 +386,7 @@ def tarce_amine():
                 member_name = result['results'][0]['data']['member_name']
             except KeyError:
                 member_name = ""
-            trt:
+            try:
                 title = result['results'][0]['data']['title']
             except KeyError:
                 title = ""
