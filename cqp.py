@@ -234,7 +234,10 @@ def tarce_amine():
                         member_name = result['results'][0]['data']['member_name']
                     except KeyError:
                         member_name = ""
-                    title = result['results'][0]['data']['title']
+                    trt:
+                        title = result['results'][0]['data']['title']
+                    except KeyError:
+                        title = ""
                     search_results = {
                         "user_id": eval_cqp_data['user_id'],
                         "message": "[CQ:image,file=" + str(mini_image) + "]" + '\n' +  # 返回图片的CQ码给酷Q air版无法发送图片
@@ -278,7 +281,10 @@ def tarce_amine():
                 member_name = result['results'][0]['data']['member_name']
             except KeyError:
                 member_name = ""
-            title = result['results'][0]['data']['title']
+            trt:
+                title = result['results'][0]['data']['title']
+            except KeyError:
+                title = ""
             search_results = {
                 "user_id": eval_cqp_data['user_id'],
                 "message": "[CQ:image,file=" + str(mini_image) + "]" + '\n' +  # 返回图片的CQ码给酷Q air版无法发送图片
@@ -332,7 +338,10 @@ def tarce_amine():
                         member_name = result['results'][0]['data']['member_name']
                     except KeyError:
                         member_name = ""
-                    title = result['results'][0]['data']['title']
+                    trt:
+                        title = result['results'][0]['data']['title']
+                    except KeyError:
+                        title = ""
                     search_results = {
                         "group_id": eval_cqp_data['group_id'],
                         "message":"[CQ:at,qq=" + str(eval_cqp_data['user_id'])+"]" +
@@ -377,7 +386,10 @@ def tarce_amine():
                 member_name = result['results'][0]['data']['member_name']
             except KeyError:
                 member_name = ""
-            title = result['results'][0]['data']['title']
+            trt:
+                title = result['results'][0]['data']['title']
+            except KeyError:
+                title = ""
             search_results = {
                 "group_id": eval_cqp_data['group_id'],
                 "message": "[CQ:at,qq=" + str(eval_cqp_data['user_id'])+"]" +
