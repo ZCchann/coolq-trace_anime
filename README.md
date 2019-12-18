@@ -39,3 +39,8 @@ pipenv install
 
 python cqp.py
 
+## 本项目维护
+
+[ZCchann](https://github.com/ZCchann)
+
+[miaosuzuichu](https://github.com/miaosuzuichu)
