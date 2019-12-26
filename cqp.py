@@ -2,45 +2,23 @@
 from flask import Flask, request,jsonify
 import requests
 import json
+from anime import tra_anime,group_tra_anime
+from image import tra_images,tra_images_group
+from reply import reply_search ,reply_anime , reply_group ,reply_anime_group ,reply_image,reply_image_group
 
-def config_api_key():
-    conf = open("config.json", encoding='utf-8')
-    setting = json.load(conf)
-    api_key = setting['api_key']
-    return api_key
-
-def config_tarce_message():
-    conf = open("config.json", encoding='utf-8')
-    setting = json.load(conf)
-    tarce_message = setting['tarce_message']
-    return tarce_message
-
-def config_search_message():
-    conf = open("config.json", encoding='utf-8')
-    setting = json.load(conf)
-    search_message = setting['search_message']
-    return search_message
-
-def config_coolq_http_api_ip():
-    conf = open("config.json", encoding='utf-8')
-    setting = json.load(conf)
-    coolq_http_api_ip = setting['coolq_http_api_ip']
-    return coolq_http_api_ip
-
-def config_coolq_http_api_port():
-    conf = open("config.json", encoding='utf-8')
-    setting = json.load(conf)
-    coolq_http_api_port = setting['coolq_http_api_port']
-    return coolq_http_api_port
+config = json.load(open("config.json",encoding='utf-8'))
+api_key = config['api_key']
+tarce_message = config['tarce_message']  #搜番剧的命令
+search_message = config['search_message']  #搜图片的命令
+coolq_http_api_ip = config['coolq_http_api_ip']
+coolq_http_api_port = config['coolq_http_api_port']
 
 app = Flask(__name__)
-siliao = 'http://'+ config_coolq_http_api_ip() + ':'+ config_coolq_http_api_port() +'/send_private_msg?' #酷Q http插件私聊推送url
-qunliao = 'http://'+ config_coolq_http_api_ip() + ':'+ config_coolq_http_api_port() +'/send_group_msg?' #酷Q http插件群聊推送url
+siliao = 'http://'+ coolq_http_api_ip + ':'+ coolq_http_api_port +'/send_private_msg?' #酷Q http插件私聊推送url
+qunliao = 'http://'+ coolq_http_api_ip + ':'+ coolq_http_api_port +'/send_group_msg?' #酷Q http插件群聊推送url
 trace_moe_url = 'https://trace.moe/api/search?url='  #trace.moe的api地址
 search_image_url = 'https://saucenao.com/search.php?db=999&output_type=2&testmode=1&numres=16&' #saucenao的API地址
-api_key = config_api_key() #saucenao的api key
-tarce_message = config_tarce_message() #搜番剧的命令
-search_message = config_search_message() #搜图片的命令
+api_key = api_key #saucenao的api key
 user_private_list = []  #暂存 搜索番剧发送者QQ号的列表
 user_group_list = [] #暂存搜索番剧 群搜图 群号
 search_acg_image_list = [] #暂存 搜索图片发送者QQ号的列表
@@ -59,37 +37,15 @@ def tarce_amine():
         if eval_cqp_data['message'] == tarce_message:  # 私聊搜索番剧截图  replace 删除换行符跟回车
             if eval_cqp_data['user_id'] not in user_private_list:
                 user_private_list.append(eval_cqp_data['user_id'])
-                search_results = {
-                    "user_id": eval_cqp_data['user_id'],
-                    "message": '请发送图片'
-                }
-                requests.get(url=siliao, params=search_results)
+                requests.get(url=siliao, params=reply_search(eval_cqp_data))
 
         elif eval_cqp_data['message'].split(',')[0] == '[CQ:image':
             for c in user_private_list:
                 if eval_cqp_data['user_id'] == c:
                     message_url = eval_cqp_data['message'].split('[')[1].split(']')[0].split('url=')[1]  # 切片内容 把图片的url切片出来
                     trace_url = trace_moe_url + message_url
-                    kaifuku = {
-                        "user_id": eval_cqp_data['user_id'],
-                        "message": "番剧截图识别中 请稍后......"
-                    }
-                    requests.get(url=siliao , params=kaifuku)
-                    response = requests.get(trace_url)  # 获取trace.moe的返回信息
-                    response.encoding = 'utf-8'  # 把trace.moe的返回信息转码成utf-8
-                    result = response.json()  # 转换成json格式
-                    animename = result["docs"][0]["title_chinese"]  # 切片番剧名称
-                    similarity = result["docs"][0]["similarity"]  # 切片相似度
-                    time = result["docs"][0]["at"]  # 切片时间
-                    episode = result["docs"][0]["episode"]  # 切片集数
-                    search_results = {
-                        "user_id": eval_cqp_data['user_id'],
-                        "message": "番剧名称：" + animename + " 第" + str(episode) + "集" + '\n' +
-                                   "相似度：" + str(similarity * 100).split('.')[0] + "." + str(similarity * 100).split('.')[1][
-                                                                                        :2] + "%"
-                                   + '\n' + "时间：" + str(time / 60).split('.')[0] + '分' + str(time % 60).split('.')[0] + '秒'
-                    }
-                    requests.get(url=siliao, params=search_results)
+                    requests.get(url=siliao , params=reply_anime(eval_cqp_data))
+                    requests.get(url=siliao, params=tra_anime(trace_url,eval_cqp_data))
                     user_private_list.pop(private_number)
                     break
                 private_number = private_number + 1
@@ -99,25 +55,8 @@ def tarce_amine():
         elif tarce_message in eval_cqp_data['message'] and "[CQ:image" in eval_cqp_data['message']:
             message_url = eval_cqp_data['message'].split('[')[1].split(']')[0].split('url=')[1]   #切片内容 把图片的url切片出来
             trace_url=trace_moe_url + message_url
-            kaifuku = {
-                "user_id": eval_cqp_data['user_id'],
-                "message": "番剧截图识别中 请稍后......"
-            }
-            requests.get(url = siliao,params=kaifuku)
-            response = requests.get(trace_url)  #获取trace.moe的返回信息
-            response.encoding = 'utf-8'  #把trace.moe的返回信息转码成utf-8
-            result = response.json()  #转换成json格式
-            animename = result["docs"][0]["title_chinese"]  # 切片番剧名称
-            similarity = result["docs"][0]["similarity"]  # 切片相似度
-            time = result["docs"][0]["at"]  # 切片时间
-            episode = result["docs"][0]["episode"]  # 切片集数
-            search_results = {
-                    "user_id": eval_cqp_data['user_id'],
-                    "message": "番剧名称：" + animename + " 第" + str(episode) + "集" + '\n' +
-                    "相似度：" + str(similarity * 100).split('.')[0] + "." + str(similarity * 100).split('.')[1][:2] + "%"
-                    + '\n' + "时间：" + str(time / 60).split('.')[0] + '分'+ str(time % 60).split('.')[0] + '秒'
-                    }
-            requests.get(url = siliao,params=search_results)
+            requests.get(url = siliao,params=reply_anime(eval_cqp_data))
+            requests.get(url = siliao,params=tra_anime(trace_url,eval_cqp_data))
 ######################################################################################################################
 
 #####################################群聊 只发文字 后发图 识别番剧####################################################
@@ -125,11 +64,7 @@ def tarce_amine():
         if eval_cqp_data['message'] == tarce_message:  # 私聊搜索番剧截图  replace 删除换行符跟回车
             if eval_cqp_data['user_id'] not in user_group_list:
                 user_group_list.append(eval_cqp_data['user_id'])
-                search_results = {
-                    "group_id": eval_cqp_data['group_id'],
-                    "message": '请发送图片'
-                }
-                requests.get(url=qunliao, params=search_results)
+                requests.get(url=qunliao, params=reply_group(eval_cqp_data))
 
 
         elif eval_cqp_data['message'].split(',')[0] == '[CQ:image':
@@ -138,35 +73,14 @@ def tarce_amine():
                     message_url = eval_cqp_data['message'].split('[')[1].split(']')[0].split('url=')[
                         1]  # 切片内容 把图片的url切片出来
                     trace_url = trace_moe_url + message_url
-                    kaifuku = {
-                        "group_id": eval_cqp_data['group_id'],
-                        "message": "番剧截图识别中 请稍后......"
-                    }
-                    requests.get(url=qunliao, params=kaifuku)
-                    response = requests.get(trace_url)  # 获取trace.moe的返回信息
-                    response.encoding = 'utf-8'  # 把trace.moe的返回信息转码成utf-8
-                    result = response.json()  # 转换成json格式
-                    animename = result["docs"][0]["title_chinese"]  # 切片番剧名称
-                    similarity = result["docs"][0]["similarity"]  # 切片相似度
-                    time = result["docs"][0]["at"]  # 切片时间
-                    episode = result["docs"][0]["episode"]  # 切片集数
-                    search_results = {
-                        "group_id": eval_cqp_data['group_id'],
-                        "message": "[CQ:at,qq=" + str(eval_cqp_data['user_id'])+"]" + '\n' +
-                                   "番剧名称：" + animename + " 第" + str(episode) + "集" + '\n' +
-                                   "相似度：" + str(similarity * 100).split('.')[0] + "." +
-                                   str(similarity * 100).split('.')[1][
-                                   :2] + "%"
-                                   + '\n' + "时间：" + str(time / 60).split('.')[0] + '分' + str(time % 60).split('.')[
-                                       0] + '秒'
-                    }
-                    requests.get(url=qunliao, params=search_results)
+                    requests.get(url=qunliao, params=reply_anime_group(eval_cqp_data)) #返回"番剧识别中"
+                    requests.get(url=qunliao, params=group_tra_anime(trace_url,eval_cqp_data))  #返回结果
                     user_group_list.pop(group_number)
                     break
                 group_number = group_number + 1
 # #######################################################################################################################
 #
-# #####################################群聊 发文字带图片###################################################################
+# #####################################群聊 发文字带图片 识别番剧###################################################################
         elif tarce_message in eval_cqp_data['message'] and "[CQ:image" in eval_cqp_data['message']:
             message_url = eval_cqp_data['message'].split('[')[1].split(']')[0].split('url=')[1]  # 切片内容 把图片的url切片出来
             trace_url = trace_moe_url + message_url
@@ -175,22 +89,7 @@ def tarce_amine():
                 "message": "番剧截图识别中 请稍后......"
             }
             requests.get(url=qunliao, params=kaifuku)
-            response = requests.get(trace_url)  # 获取trace.moe的返回信息
-            response.encoding = 'utf-8'  # 把trace.moe的返回信息转码成utf-8
-            result = response.json()  # 转换成json格式
-            animename = result["docs"][0]["title_chinese"]  # 切片番剧名称
-            similarity = result["docs"][0]["similarity"]  # 切片相似度
-            time = result["docs"][0]["at"]  # 切片时间
-            episode = result["docs"][0]["episode"]  # 切片集数
-            search_results = {
-                "group_id": eval_cqp_data['group_id'],
-                "message": "[CQ:at,qq=" + str(eval_cqp_data['user_id'])+"]" +'\n' +
-                           "番剧名称：" + animename + " 第" + str(episode) + "集" + '\n' +
-                           "相似度：" + str(similarity * 100).split('.')[0] + "." +
-                           str(similarity * 100).split('.')[1][:2] + "%"
-                           + '\n' + "时间：" + str(time / 60).split('.')[0] + '分' + str(time % 60).split('.')[0] + '秒'
-            }
-            requests.get(url=qunliao, params=search_results)
+            requests.get(url=qunliao, params=group_tra_anime(trace_url,eval_cqp_data))
 ######################################################################################################################
 
 #####################################私聊 只发文字 后发图 搜索图片####################################################
@@ -198,56 +97,14 @@ def tarce_amine():
         if eval_cqp_data['message'] == search_message:
             if eval_cqp_data['user_id'] not in search_acg_image_list: #如果发送命令的QQ号不存在user_private_list表当中
                 search_acg_image_list.append(eval_cqp_data['user_id']) #将QQ号暂存至user_private_list表当中
-                kaifuku = {
-                    "user_id": eval_cqp_data['user_id'],
-                    "message": '请发送图片'
-                }
-                requests.get(url=siliao, params=kaifuku)
+                requests.get(url=siliao, params=reply_search(eval_cqp_data))
         elif eval_cqp_data['message'].split(',')[0] == '[CQ:image':
             for c in search_acg_image_list:
                 if eval_cqp_data['user_id'] == c:
                     trace_image_url = eval_cqp_data['message'].split('[')[1].split(']')[0].split('url=')[1]  # 切片内容 把图片的url切片出来
                     search_image = search_image_url + 'api_key=' + api_key + '&url=' +trace_image_url
-                    kaifuku = {
-                        "user_id": eval_cqp_data['user_id'],
-                        "message": "图片搜索中 请稍后......"
-                    }
-                    requests.get(url=siliao , params=kaifuku)
-                    response = requests.get(search_image)  # 获取trace.moe的返回信息
-                    response.encoding = 'utf-8'  # 把trace.moe的返回信息转码成utf-8
-                    result = response.json()  # 转换成json格式
-                    mini_image = result['results'][0]['header']['thumbnail']  # 缩略图
-                    similarity = result['results'][0]['header']['similarity']  # 相似度
-                    try:
-                        jp_name = result['results'][0]['data']['jp_name']
-                    except KeyError:
-                        jp_name = ""
-                    try:
-                        ext_urls = result['results'][0]['data']['ext_urls'][0]
-                    except KeyError:
-                        ext_urls = ""
-                    try:
-                        pixiv_id = int(result['results'][0]['data']['pixiv_id'])
-                    except KeyError:
-                        pixiv_id = ""
-                    try:
-                        member_name = result['results'][0]['data']['member_name']
-                    except KeyError:
-                        member_name = ""
-                    try:
-                        title = result['results'][0]['data']['title']
-                    except KeyError:
-                        title = ""
-                    search_results = {
-                        "user_id": eval_cqp_data['user_id'],
-                        "message": "[CQ:image,file=" + str(mini_image) + "]" + '\n' +  # 返回图片的CQ码给酷Q air版无法发送图片
-                                   "相似度 " + str(similarity) + '%' + '\n' +
-                                   "作者名称 " + str(member_name) + '\n' +
-                                   "图片名称 " + str(title) + '' + jp_name + '\n' +
-                                   "P站id " + str(pixiv_id) + '\n' +
-                                   "图片链接 " + '\n' + ext_urls
-                    }
-                    requests.get(url=siliao, params=search_results)
+                    requests.get(url=siliao , params=reply_image(eval_cqp_data))
+                    requests.get(url=siliao, params=tra_images(search_image,eval_cqp_data))
                     search_acg_image_list.pop(search_acg_number)
                     break
                 search_acg_number = search_acg_number + 1
@@ -255,56 +112,14 @@ def tarce_amine():
         elif search_message in eval_cqp_data['message'] and "[CQ:image" in eval_cqp_data['message']:
             trace_image_url = eval_cqp_data['message'].split('[')[1].split(']')[0].split('url=')[1]  # 切片内容 把图片的url切片出来
             search_image = search_image_url + 'api_key=' + api_key + '&url=' + trace_image_url
-            kaifuku = {
-                "user_id": eval_cqp_data['user_id'],
-                "message": "图片搜索中 请稍后......"
-            }
-            requests.get(url=siliao, params=kaifuku)
-            response = requests.get(search_image)  # 获取trace.moe的返回信息
-            response.encoding = 'utf-8'  # 把trace.moe的返回信息转码成utf-8
-            result = response.json()  # 转换成json格式
-            mini_image = result['results'][0]['header']['thumbnail']  # 缩略图
-            similarity = result['results'][0]['header']['similarity']  # 相似度
-            try:
-                jp_name = result['results'][0]['data']['jp_name']
-            except KeyError:
-                jp_name = ""
-            try:
-                ext_urls = result['results'][0]['data']['ext_urls'][0]
-            except KeyError:
-                ext_urls = ""
-            try:
-                pixiv_id = int(result['results'][0]['data']['pixiv_id'])
-            except KeyError:
-                pixiv_id = ""
-            try:
-                member_name = result['results'][0]['data']['member_name']
-            except KeyError:
-                member_name = ""
-            try:
-                title = result['results'][0]['data']['title']
-            except KeyError:
-                title = ""
-            search_results = {
-                "user_id": eval_cqp_data['user_id'],
-                "message": "[CQ:image,file=" + str(mini_image) + "]" + '\n' +  # 返回图片的CQ码给酷Q air版无法发送图片
-                           "相似度 " + str(similarity) + '%' + '\n' +
-                           "作者名称 " + str(member_name) + '\n' +
-                           "图片名称 " + str(title) + ''+jp_name + '\n' +
-                           "P站id " + str(pixiv_id) + '\n' +
-                           "图片链接 " + '\n' + ext_urls.replace('[', '').replace(']', '').replace("'", '')
-            }
-            requests.get(url=siliao, params=search_results)
+            requests.get(url=siliao, params=reply_image(eval_cqp_data))
+            requests.get(url=siliao, params=tra_images(search_image,eval_cqp_data))
 #####################################群聊 只发文字 后发图 搜索图片#############################
     if eval_cqp_data['message_type'] == 'group':
         if eval_cqp_data['message'] == search_message:  # 私聊搜索番剧截图  replace 删除换行符跟回车
             if eval_cqp_data['user_id'] not in search_acg_image_group_list :
                 search_acg_image_group_list .append(eval_cqp_data['user_id'])
-                kaifuku = {
-                    "group_id": eval_cqp_data['group_id'],
-                    "message": "请发送图片"
-                }
-                requests.get(url=qunliao, params=kaifuku)
+                requests.get(url=qunliao, params=reply_group(eval_cqp_data))
 
         elif eval_cqp_data['message'].split(',')[0] == '[CQ:image':
             for c in search_acg_image_group_list:
@@ -312,47 +127,8 @@ def tarce_amine():
                     trace_image_url = eval_cqp_data['message'].split('[')[1].split(']')[0].split('url=')[
                         1]  # 切片内容 把图片的url切片出来
                     search_image = search_image_url + 'api_key=' + api_key + '&url=' + trace_image_url
-                    kaifuku = {
-                        "group_id": eval_cqp_data['group_id'],
-                        "message": "图片搜索中 请稍后......"
-                    }
-                    requests.get(url=qunliao, params=kaifuku)
-                    response = requests.get(search_image)  # 获取trace.moe的返回信息
-                    response.encoding = 'utf-8'  # 把trace.moe的返回信息转码成utf-8
-                    result = response.json()  # 转换成json格式
-                    mini_image = result['results'][0]['header']['thumbnail']  # 缩略图
-                    similarity = result['results'][0]['header']['similarity']  # 相似度
-                    try:
-                        jp_name = result['results'][0]['data']['jp_name']
-                    except KeyError:
-                        jp_name = ""
-                    try:
-                        ext_urls = result['results'][0]['data']['ext_urls'][0]
-                    except KeyError:
-                        ext_urls = ""
-                    try:
-                        pixiv_id = int(result['results'][0]['data']['pixiv_id'])
-                    except KeyError:
-                        pixiv_id = ""
-                    try:
-                        member_name = result['results'][0]['data']['member_name']
-                    except KeyError:
-                        member_name = ""
-                    try:
-                        title = result['results'][0]['data']['title']
-                    except KeyError:
-                        title = ""
-                    search_results = {
-                        "group_id": eval_cqp_data['group_id'],
-                        "message":"[CQ:at,qq=" + str(eval_cqp_data['user_id'])+"]" +
-                                   "[CQ:image,file=" + str(mini_image) + "]" + '\n' +  # 返回图片的CQ码给酷Q air版无法发送图片
-                                   "相似度 " + str(similarity) + '%' + '\n' +
-                                   "作者名称 " + str(member_name) + '\n' +
-                                   "图片名称 " + str(title) + ''+jp_name + '\n' 
-                                   "P站id " + str(pixiv_id) +'\n' +
-                                   "图片链接 " + '\n' + str(ext_urls.replace('[', '').replace(']', '').replace("'", ''))
-                    }
-                    requests.get(url=qunliao, params=search_results)
+                    requests.get(url=qunliao, params=reply_image_group(eval_cqp_data))
+                    requests.get(url=qunliao, params=tra_images_group(search_image,eval_cqp_data))
                     search_acg_image_group_list.pop(search_acg_group_number)
                     break
                     search_acg_group_number = search_acg_group_number + 1
@@ -360,47 +136,8 @@ def tarce_amine():
         elif  search_message in eval_cqp_data['message'] and "[CQ:image" in eval_cqp_data['message']:
             trace_image_url = eval_cqp_data['message'].split('[')[1].split(']')[0].split('url=')[1]  # 切片内容 把图片的url切片出来
             search_image = search_image_url + 'api_key=' + api_key + '&url=' + trace_image_url
-            kaifuku = {
-                "group_id": eval_cqp_data['group_id'],
-                "message": "图片搜索中 请稍后......"
-            }
-            requests.get(url=qunliao, params=kaifuku)
-            response = requests.get(search_image)  # 获取trace.moe的返回信息
-            response.encoding = 'utf-8'  # 把trace.moe的返回信息转码成utf-8
-            result = response.json()  # 转换成json格式
-            mini_image = result['results'][0]['header']['thumbnail']  # 缩略图
-            similarity = result['results'][0]['header']['similarity']  # 相似度
-            try:
-                jp_name = result['results'][0]['data']['jp_name']
-            except KeyError:
-                jp_name = ""
-            try:
-                ext_urls = result['results'][0]['data']['ext_urls'][0]
-            except KeyError:
-                ext_urls = ""
-            try:
-                pixiv_id = int(result['results'][0]['data']['pixiv_id'])
-            except KeyError:
-                pixiv_id = ""
-            try:
-                member_name = result['results'][0]['data']['member_name']
-            except KeyError:
-                member_name = ""
-            try:
-                title = result['results'][0]['data']['title']
-            except KeyError:
-                title = ""
-            search_results = {
-                "group_id": eval_cqp_data['group_id'],
-                "message": "[CQ:at,qq=" + str(eval_cqp_data['user_id'])+"]" +
-                           "[CQ:image,file=" + str(mini_image) + "]" + '\n' +  # 返回图片的CQ码给酷Q air版无法发送图片
-                           "相似度 " + str(similarity) + '%' + '\n' +
-                           "作者名称 " + str(member_name) + '\n' +
-                           "图片名称 " + str(title) + ''+jp_name + '\n' 
-                           "P站id " + str(pixiv_id) + '\n' +
-                           "图片链接 " + '\n' + ext_urls.replace('[', '').replace(']', '').replace("'", '')
-            }
-            requests.get(url=qunliao, params=search_results)
+            requests.get(url=qunliao, params=reply_image_group(eval_cqp_data))
+            requests.get(url=qunliao, params=tra_images_group(search_image,eval_cqp_data))
     return (cqp_push_data)
 
 if __name__ == '__main__':
