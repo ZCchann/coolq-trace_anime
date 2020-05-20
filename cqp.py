@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
-from flask import Flask, request,jsonify
+from flask import *
+from anime import *
+from image import *
+from reply import *
+from pixiv import *
 import requests
 import json
-from anime import tra_anime,group_tra_anime
-from image import tra_images,tra_images_group
-from reply import reply_search ,reply_anime , reply_group ,reply_anime_group ,reply_image,reply_image_group
+
 
 config = json.load(open("config.json",encoding='utf-8'))
 api_key = config['api_key']
@@ -65,8 +67,8 @@ def tarce_amine():
             if eval_cqp_data['user_id'] not in user_group_list:
                 user_group_list.append(eval_cqp_data['user_id'])
                 requests.get(url=qunliao, params=reply_group(eval_cqp_data))
-
-
+        elif eval_cqp_data['message'] == "今日排行":
+            return requests.get(url=qunliao, params=day_illust(eval_cqp_data)) #群聊 pixiv今日排行top5
         elif eval_cqp_data['message'].split(',')[0] == '[CQ:image':
             for c in user_group_list:
                 if eval_cqp_data['user_id'] == c:

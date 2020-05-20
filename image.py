@@ -45,7 +45,6 @@ def tra_images(images_url,eval_cqp_data):
     }
     return search_results
 
-
 def tra_images_group(images_url,eval_cqp_data):
     response = requests.get(images_url)  # 获取trace.moe的返回信息
     response.encoding = 'utf-8'  # 把trace.moe的返回信息转码成utf-8
